@@ -1,6 +1,17 @@
 import DS from 'ember-data';
 
 export default DS.JSONAPISerializer.extend({
+  // We override _normalizeResourceHelper so that resources in the shoebox are normalized
+  // using the same serializer that serialized them (i.e., the shoebox serializer). Otherwise,
+  // this method would try to normalize them by deferring to model-specific serializers.
+  _normalizeResourceHelper(resourceHash) {
+    let modelName = this.modelNameFromPayloadKey(resourceHash.type);
+    let modelClass = this.store.modelFor(modelName);
+    let serializer = this;
+    let { data } = serializer.normalize(modelClass, resourceHash);
+    return data;
+  },
+
   // store.push expects singular model names in "type":
   // http://emberjs.com/api/data/classes/DS.Store.html#method_push
   //
