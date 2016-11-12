@@ -171,3 +171,43 @@ test('when a model uses the REST serializer', function(assert) {
     assert.deepEqual(rko.get('movies.firstObject.releaseDate'), new Date('1941-09-05T07:00:00.000Z'), 'in browser deserializes hasMany');
   });
 });
+
+test('when a model has complex attributes', function(assert) {
+  const fastbootStore = this.fastbootAppInstance.lookup('service:store');
+
+  Ember.run(() => {
+    fastbootStore.pushPayload({
+      data: {
+        type: 'movie',
+        id: 1,
+        attributes: {
+          title: 'Citizen Kane',
+          'release-date': '1941-09-05T07:00:00.000Z',
+          quotes: [
+            'Charles Foster Kane: Rosebud...',
+            'Charles Foster Kane: I always gagged on the silver spoon.',
+            'Charles Foster Kane: I run a couple of newspapers. What do you do?',
+          ],
+          oscars: {
+            wins: ['Best Writing, Original Screenplay'],
+            nominations: ['Best Picture', 'Best Actor in a Leading Role', 'Best Director', 'Best Cinematography, Black-and-White']
+          }
+        }
+      }
+    });
+
+    fastbootInitialize(this.fastbootAppInstance);
+
+    const shoebox = this.fastbootAppInstance.lookup('service:fastboot').get('shoebox');
+    const shoeboxCitizenKane = shoebox.get('ember-data-store.records.data').filter(r => r.type === 'movie')[0];
+    assert.equal(shoeboxCitizenKane.attributes['quotes'].length, 3, 'in fastboot serializes array attrs');
+    assert.equal(shoeboxCitizenKane.attributes['oscars']['nominations'].length, 4, 'in fastboot serializes object attrs');
+
+    browserInitialize(this.browserAppInstance);
+
+    const browserStore = this.browserAppInstance.lookup('service:store');
+    const citizenKane = browserStore.peekRecord('movie', 1);
+    assert.equal(citizenKane.get('quotes.length'), 3, 'in browser deserializes array attrs');
+    assert.equal(citizenKane.get('oscars.nominations.length'), 4, 'in browser deserializes object attrs');
+  });
+});

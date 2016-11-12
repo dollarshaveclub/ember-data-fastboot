@@ -5,6 +5,8 @@ export default DS.Model.extend({
   title: DS.attr('string'),
   releaseDate: DS.attr('date'),
   director: DS.belongsTo('person'),
-  cast: DS.hasMany('person')
+  cast: DS.hasMany('person'),
+  quotes: DS.attr(),
+  oscars: DS.attr()
 
 });
